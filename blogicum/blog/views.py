@@ -26,6 +26,36 @@ from blog.constants import POSTS_PER_PAGE
 User = get_user_model()
 NOW = pytz.utc.localize(datetime.now())
 
+def category_posts(request, category_slug):
+    category = get_object_or_404(Category, slug=category_slug)
+    if not category.is_published:
+        raise Http404
+    post_list = Post.objects.filter(
+        category=category,
+        is_published=True,
+        pub_date__lte=NOW,
+    ).order_by("-pub_date")
+    paginator = Paginator(post_list, POSTS_PER_PAGE)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    context = {
+        "category": category,
+        "page_obj": page_obj,
+    }
+    return render(request, "blog/category.html", context)
+
+def user_profile(request, username):
+    profile = get_object_or_404(User, username=username)
+    posts = profile.posts.annotate(comment_count=Count("comments")).order_by(
+        "-pub_date"
+    )
+    paginator = Paginator(posts, POSTS_PER_PAGE)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    context = {
+        "page_obj": page_obj,
+        "profile": profile,
+    }
+    return render(request, "blog/profile.html", context)
+
 
 class PostListView(ListView):
     model = Post
@@ -105,20 +135,6 @@ class PostDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-def user_profile(request, username):
-    profile = get_object_or_404(User, username=username)
-    posts = profile.posts.annotate(comment_count=Count("comments")).order_by(
-        "-pub_date"
-    )
-    paginator = Paginator(posts, POSTS_PER_PAGE)
-    page_obj = paginator.get_page(request.GET.get("page"))
-    context = {
-        "page_obj": page_obj,
-        "profile": profile,
-    }
-    return render(request, "blog/profile.html", context)
-
-
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = User
     template_name = "blog/user.html"
@@ -155,24 +171,6 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         )
 
 
-class CommentUpdateView(LoginRequiredMixin, UpdateView):
-    model = Comment
-    form_class = CommentForm
-    template_name = "blog/comment.html"
-    pk_url_kwarg = "comment_id"
-
-    def dispatch(self, request, *args, **kwargs):
-        instance = get_object_or_404(Comment, pk=kwargs.get("comment_id"))
-        if request.user != instance.author:
-            return redirect("blog:post_detail", self.kwargs.get("post_id"))
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_success_url(self):
-        return reverse_lazy(
-            "blog:post_detail", kwargs={"post_id": self.kwargs.get("post_id")}
-        )
-
-
 class CommentDeleteView(LoginRequiredMixin, DeleteView):
     model = Comment
     pk_url_kwarg = "comment_id"
@@ -190,19 +188,19 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
         )
 
 
-def category_posts(request, category_slug):
-    category = get_object_or_404(Category, slug=category_slug)
-    if not category.is_published:
-        raise Http404
-    post_list = Post.objects.filter(
-        category=category,
-        is_published=True,
-        pub_date__lte=NOW,
-    ).order_by("-pub_date")
-    paginator = Paginator(post_list, POSTS_PER_PAGE)
-    page_obj = paginator.get_page(request.GET.get("page"))
-    context = {
-        "category": category,
-        "page_obj": page_obj,
-    }
-    return render(request, "blog/category.html", context)
+class CommentUpdateView(LoginRequiredMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = "blog/comment.html"
+    pk_url_kwarg = "comment_id"
+
+    def dispatch(self, request, *args, **kwargs):
+        instance = get_object_or_404(Comment, pk=kwargs.get("comment_id"))
+        if request.user != instance.author:
+            return redirect("blog:post_detail", self.kwargs.get("post_id"))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "blog:post_detail", kwargs={"post_id": self.kwargs.get("post_id")}
+        )

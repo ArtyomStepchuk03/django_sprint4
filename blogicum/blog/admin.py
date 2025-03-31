@@ -6,18 +6,6 @@ from blog.models import Post, Category, Location
 admin.site.empty_value_display = "Не задано"
 
 
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = (
-        "title",
-        "description",
-        "slug",
-        "is_published",
-    )
-    list_editable = ("is_published",)
-    search_fields = ("title",)
-
-
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     list_display = (
@@ -36,6 +24,17 @@ class PostAdmin(admin.ModelAdmin):
     search_fields = ("title",)
     list_filter = ("is_published",)
     list_display_links = ("title",)
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "description",
+        "slug",
+        "is_published",
+    )
+    list_editable = ("is_published",)
+    search_fields = ("title",)
 
 
 admin.site.register(Location)

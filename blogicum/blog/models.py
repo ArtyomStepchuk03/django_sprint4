@@ -24,12 +24,10 @@ class Post(TimeStampedModel):
         ),
     )
 
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        blank=False,
-        verbose_name="Автор публикации",
-        related_name="posts",
+    image = models.ImageField(
+        "Картинка",
+        upload_to="media/",
+        blank=True,
     )
 
     location = models.ForeignKey(
@@ -50,10 +48,12 @@ class Post(TimeStampedModel):
         related_name="posts",
     )
 
-    image = models.ImageField(
-        "Картинка",
-        upload_to="media/",
-        blank=True,
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        blank=False,
+        verbose_name="Автор публикации",
+        related_name="posts",
     )
 
     @property
@@ -69,15 +69,10 @@ class Post(TimeStampedModel):
 
 
 class Category(TimeStampedModel):
-    title = models.CharField(
-        "Заголовок",
-        max_length=256,
-        blank=False,
-    )
-    description = models.TextField(
-        "Описание",
-        blank=False,
-    )
+    class Meta:
+        verbose_name = "категория"
+        verbose_name_plural = "Категории"
+
     slug = models.SlugField(
         "Идентификатор",
         unique=True,
@@ -88,52 +83,62 @@ class Category(TimeStampedModel):
         ),
     )
 
-    class Meta:
-        verbose_name = "категория"
-        verbose_name_plural = "Категории"
+    title = models.CharField(
+        "Заголовок",
+        max_length=256,
+        blank=False,
+    )
+
+    description = models.TextField(
+        "Описание",
+        blank=False,
+    )
 
     def __str__(self):
         return self.title
 
 
 class Location(TimeStampedModel):
+    class Meta:
+        verbose_name = "местоположение"
+        verbose_name_plural = "Местоположения"
+
     name = models.CharField(
         "Название места",
         max_length=256,
         blank=False,
     )
 
-    class Meta:
-        verbose_name = "местоположение"
-        verbose_name_plural = "Местоположения"
-
     def __str__(self):
         return self.name
 
 
 class Comment(models.Model):
+    class Meta:
+        ordering = ("created_at",)
+
+    created_at = models.DateTimeField(
+        "Дата создания",
+        auto_now_add=True,
+    )
+
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name="comments",
+    )
+
     text = models.TextField(
         "Текст комментария",
         max_length=500,
     )
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         verbose_name="Автор комментария",
         related_name="comments",
     )
-    post = models.ForeignKey(
-        Post,
-        on_delete=models.CASCADE,
-        related_name="comments",
-    )
-    created_at = models.DateTimeField(
-        "Дата создания",
-        auto_now_add=True,
-    )
-
-    class Meta:
-        ordering = ("created_at",)
 
     def __str__(self):
         return self.text

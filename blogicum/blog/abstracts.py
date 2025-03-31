@@ -2,18 +2,16 @@ from django.db import models
 
 
 class TimeStampedModel(models.Model):
-    """Абстрактная модель добавляет дату создания и флаг is_published"""
+    """Базовая абстрактная модель: дата создания и флаг публикации."""
 
     is_published = models.BooleanField(
-        "Опубликовано",
+        verbose_name="Публиковать",
         default=True,
-        blank=False,
-        help_text="""Снимите галочку, чтобы скрыть публикацию.""",
+        help_text="Отключите, чтобы скрыть объект от отображения.",
     )
     created_at = models.DateTimeField(
-        "Добавлено",
+        verbose_name="Дата создания",
         auto_now_add=True,
-        blank=False,
     )
 
     class Meta:

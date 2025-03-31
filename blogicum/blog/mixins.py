@@ -4,6 +4,7 @@ from blog.models import Post
 
 
 class PostDispatchMixin:
+
     def dispatch(self, request, *args, **kwargs):
         instance = get_object_or_404(
             Post,
